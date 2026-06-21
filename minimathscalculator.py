@@ -17,9 +17,21 @@ TRANSFORMATIONS = standard_transformations + (
     convert_xor,
 )
 
+LOCAL_DICT = {
+    'sec': sp.sec,
+    'csc': sp.csc,
+    'cosec': sp.csc,
+    'cot': sp.cot,
+}
+
 
 def parse(s):
-    return parse_expr(s, transformations=TRANSFORMATIONS, evaluate=True)
+    return parse_expr(
+        s,
+        transformations=TRANSFORMATIONS,
+        local_dict=LOCAL_DICT,
+        evaluate=True
+    )
 
 
 # ---------------- UI ----------------
@@ -48,7 +60,6 @@ if not user_input:
 
 user_input = user_input.strip()
 
-# ✅ FIX 1: safe parsing (stop immediately if invalid)
 try:
     expr = parse(user_input)
 except Exception as e:
@@ -67,6 +78,7 @@ if choice == "Integration":
         else:
             st.write("Integral:")
             st.latex(sp.latex(result) + " + C")
+            st.caption("Tip: results may use 1/cos(x) instead of sec(x), 1/sin(x) instead of cosec(x), 1/tan(x) instead of cot(x). All are equivalent.")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -79,6 +91,7 @@ elif choice == "Differentiation":
 
         st.write("Derivative:")
         st.latex(sp.latex(result))
+        st.caption("Tip: tan²(x) + 1 = sec²(x), 1 + cot²(x) = cosec²(x). Both forms are correct.")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -103,6 +116,7 @@ elif choice == "Solving equation for x":
             st.write("Solutions:")
             for i, sol in enumerate(result, 1):
                 st.latex(f"x_{{{i}}} = {sp.latex(sol)}")
+            st.caption("Tip: 'I' represents the imaginary unit i (where i² = -1). Solutions may include complex numbers.")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -113,13 +127,13 @@ elif choice == "Factorising":
     try:
         factored = sp.factor(expr)
 
-        # FIX 2: more reliable comparison
         if sp.expand(factored) == sp.expand(expr):
             st.info("Cannot be factorised further")
             st.latex(sp.latex(expr))
         else:
             st.success("Factorised form:")
             st.latex(sp.latex(factored))
+            st.caption("Tip: factors are shown with integer coefficients where possible.")
 
     except Exception as e:
         st.error(f"Error: {e}")
@@ -152,7 +166,6 @@ elif choice == "Plot a graph":
 
             x_vals = np.linspace(xmin, xmax, 400)
 
-            # FIX 3: safer numeric handling
             y_vals = np.array(f(x_vals), dtype=np.float64)
             y_vals = np.nan_to_num(y_vals, nan=np.nan, posinf=np.nan, neginf=np.nan)
 
@@ -163,17 +176,15 @@ elif choice == "Plot a graph":
             ax.set_title(f"y = {sp.latex(expr)}")
 
             st.pyplot(fig)
+            st.caption("Tip: undefined points (like 1/0 or asymptotes) are skipped. Try a smaller range if the curve isn't visible.")
 
         except Exception as e:
             st.error(f"Graph error: {e}")
 
 
-# ---------------- BINOMIAL EXPANSION ----------------
+# ---------------- EXPAND BRACKETS ----------------
 elif choice == "Expand brackets":
     try:
-        expr = parse(user_input)
-
-        # FORCE FULL EXPANSION
         expanded = sp.expand(expr, force=True)
 
         if expanded == expr:
@@ -182,6 +193,7 @@ elif choice == "Expand brackets":
         else:
             st.success("Expanded form:")
             st.latex(sp.latex(expanded))
+            st.caption("Tip: works for (a+b)ⁿ binomial expansions and general bracket expansion.")
 
     except Exception as e:
         st.error(f"Error: {e}")
